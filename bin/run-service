@@ -1,0 +1,107 @@
+#!/bin/sh
+
+# run-service: Run a command or script as a service.
+
+# This script is intended to be used in containers to run services under systemd.  It allows environment variables
+# to be set on the docker/podman command line and then referenced in an application.  It does this by storing them
+# in a environment file and creating a companion service.  If systemd is not running --- which would be typical
+# in a container --- the systemd executable is exec'd making it process 1.
+
+# This is useful for running complex applications that require systemd and/or environment variables.  The application
+# does not have to define a service, one is created to run it automatically.
+
+# A variable NO_INIT may be set to indicate that the command is to be run directly without systemd.  This is useful for
+# testing the same container application with and without systemd.
+
+set -e
+
+prune_vars() {
+
+  # Remove unwanted environment vars.
+  for var in $@ ; do
+    if grep "^${var}=" ${ENV_FILE} >/dev/null 2>&1 ; then
+        echo "Info: Pruning environment var '${var}'"
+        grep "^${var}=" ${ENV_FILE}
+    	sed -i -e "/^${var}=/d" ${ENV_FILE}
+    fi
+  done
+}
+
+echo "Info: $0 Starting"
+
+SERVICE_NAME="$(basename $0)"
+
+if [ -n "$NO_INIT" ]; then
+
+  echo "Info: Executing command inline."
+  "$@"
+  
+else
+
+  # Set the environment file depending on the distro (redhat or debian-like).
+  # And, whether it is a root or user service.
+  if [ "$(id -u)" = "0" ]; then
+    echo "Info: Running as user root."
+    ENV_FILE="/etc/default"
+    [ -d /etc/sysconfig ] && ENV_FILE="/etc/sysconfig"
+    SERVICE_DIR="/usr/lib/systemd/system"
+    USEROPT=
+  else
+    echo "Info: Running as user $(id -un)."
+    mkdir -p $HOME/.config/systemd/user
+    ENV_FILE="$HOME/.config/systemd/user"
+    SERVICE_DIR="$HOME/.config/systemd/user"
+    USEROPT="--user"
+  fi
+  ENV_FILE="$ENV_FILE/$SERVICE_NAME"
+  
+  echo "Info: Creating ${ENV_FILE} environment file."
+
+  # Store the environment vars (pruning unwanted ones) into an
+  # EnvironmentFile for the service.
+  cat /proc/self/environ | xargs -0 -L1 >${ENV_FILE}
+  prune_vars DISTTAG container LS_COLORS TERM SHLVL
+  
+  echo "Info: Creating $SERVICE_DIR/${SERVICE_NAME}.service unit file."
+  cat >$SERVICE_DIR/${SERVICE_NAME}.service <<-__EOD__
+	[Unit]
+	Description=$SERVICE_NAME command service.
+
+	[Service]
+	EnvironmentFile=-${ENV_FILE}
+	ExecStart=$@
+
+	[Install]
+	WantedBy=multi-user.target
+	__EOD__
+
+  INITPROC="$(ps aux | grep -E '([ ]*[ ]1[ ]*root|root.*[ ]1[ ])')"
+  SYSINIT=""
+  [ -n "$(echo $INITPROC | grep /sbin/init )"           ] && SYSINIT="true"
+  [ -n "$(echo $INITPROC | grep /lib/systemd/systemd )" ] && SYSINIT="true"
+
+  if [ "$SYSINIT" = "true" ]; then
+    echo "Info: Reloading daemons."
+    systemctl $USEROPT daemon-reload
+    echo "Info: Starting service."
+    systemctl $USEROPT start ${SERVICE_NAME}.service
+  else
+    # The following will only be run in a container not running systemd.
+    systemctl enable ${SERVICE_NAME}.service
+    SYSEXEC="/lib/systemd/systemd"
+    [ -x /sbin/init ] && SYSEXEC="/sbin/init"
+    if [ -x $SYSEXEC ]; then
+      echo "Info: Performing exec on the systemd $SYSEXEC executable."
+      exec "/sbin/init"
+      echo "This should never be reached."
+    else
+      echo "Error: Cannot find the systemd $SYSEXEC executable!"
+      exit 1
+    fi
+  fi
+
+fi
+
+echo "Info: $0 Exiting"
+exit 0
+

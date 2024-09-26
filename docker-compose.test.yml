@@ -1,0 +1,27 @@
+version: '3'
+
+# Automated test compose file.
+
+services:
+  inline:
+    image: lochnerr/systemd
+    command: /usr/local/bin/run-service /usr/local/bin/test-script.sh INLINE /unittest
+    volumes:
+      - share:/unittest:z
+    environment:
+      NO_INIT: true
+  service:
+    image: lochnerr/systemd
+    command: /usr/local/bin/run-service /usr/local/bin/test-script.sh SERVICE /unittest
+    systemd: always
+    volumes:
+      - share:/unittest:z
+  sut:
+    image: lochnerr/systemd
+    command: /usr/local/bin/systemd-test.sh
+    volumes:
+      - share:/unittest:z
+
+volumes:
+  share:
+
