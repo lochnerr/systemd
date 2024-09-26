@@ -1,0 +1,49 @@
+FROM ubuntu:latest
+
+LABEL MAINTAINER Richard Lochner, Clone Research Corp. <lochner@clone1.com> \
+      org.label-schema.name = "systemd" \
+      org.label-schema.description = "Minimal linux systemd base container." \
+      org.label-schema.vendor = "Clone Research Corp" \
+      org.label-schema.usage = "https://github.com/lochnerr/systemd" \
+      org.label-schema.vcs-url = "https://github.com/lochnerr/systemd.git"
+
+# Manditory packages:
+# systemd-container - systemd for containers.
+
+# Useful packages for debugging:
+# wget - wget (used to get current named.cache file from internet)
+# net-tools - ifconfig, hostname (used in samba-set-vars)
+# tzdata - time zones (allows setting time zone)
+# iputils-ping - ping
+# vim - vi
+
+RUN apt-get -y update \
+ && DEBIAN_FRONTEND=noninteractive apt-get -y install \
+        systemd-container \
+        wget \
+        net-tools \
+        tzdata \
+        iputils-ping \
+        vim \
+        && \
+    systemctl mask \
+       systemd-logind.service \
+       systemd-resolved.service \
+       systemd-oomd.service
+
+# Use systemd init to bring up services.
+CMD [ "/lib/systemd/systemd" ]
+
+# Copy the script files and other artifacts.
+COPY bin/. /usr/local/bin/
+
+# Set systemd stop signal.
+STOPSIGNAL SIGRTMIN+3
+
+# Set the build labels.
+# Do this last to allow build cacheing during development.
+ARG BUILD_DATE
+ARG VCS_REF
+LABEL org.label-schema.build-date = $BUILD_DATE \
+      org.label-schema.vcs-ref = $VCS_REF
+

@@ -92,7 +92,7 @@ else
     [ -x /sbin/init ] && SYSEXEC="/sbin/init"
     if [ -x $SYSEXEC ]; then
       echo "Info: Performing exec on the systemd $SYSEXEC executable."
-      exec "/sbin/init"
+      exec "$SYSEXEC"
       echo "This should never be reached."
     else
       echo "Error: Cannot find the systemd $SYSEXEC executable!"
