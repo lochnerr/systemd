@@ -11,20 +11,10 @@ LABEL MAINTAINER Richard Lochner, Clone Research Corp. <lochner@clone1.com> \
 # systemd-container - systemd for containers.
 
 # Useful packages for debugging:
-# wget - wget (used to get current named.cache file from internet)
-# net-tools - ifconfig, hostname (used in samba-set-vars)
-# tzdata - time zones (allows setting time zone)
-# iputils-ping - ping
-# vim - vi
 
 RUN apt-get -y update \
  && DEBIAN_FRONTEND=noninteractive apt-get -y install \
         systemd-container \
-        wget \
-        net-tools \
-        tzdata \
-        iputils-ping \
-        vim \
         && \
     systemctl mask \
        systemd-logind.service \

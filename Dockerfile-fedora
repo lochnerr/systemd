@@ -11,23 +11,11 @@ LABEL MAINTAINER Richard Lochner, Clone Research Corp. <lochner@clone1.com> \
 # systemd-container - systemd for containers.
 
 # Useful packages for debugging:
-# iproute - ip (used in provisioning and automated tests)
 # procps-ng - ps (Needed to determine if running under systemd)
-# wget - wget (used to get current named.cache file from internet)
-# hostname - hostname (used in samba-set-vars)
-# iputils - ping
-# net-tools - ifconfig
-# findutils - find
 
 RUN dnf -y install --nodocs \
         systemd-container \
-        iproute \
         procps-ng \
-        wget \
-        hostname \
-        iputils \
-        net-tools \
-        findutils \
         && \
     systemctl mask \
        systemd-logind.service \
