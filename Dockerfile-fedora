@@ -17,11 +17,6 @@ RUN dnf -y install --nodocs \
         systemd-container \
         procps-ng \
         && \
-    systemctl mask \
-       systemd-logind.service \
-       systemd-resolved.service \
-       systemd-oomd.service \
-       && \
     # The cleanup cleans at least 80 MB from images as of 2024-09.
     # Not doing it, however, saves a lot of time on first dnf command.
     dnf -y clean all && \
