@@ -80,6 +80,8 @@ else
   [ -n "$(echo $INITPROC | grep /sbin/init )"           ] && SYSINIT="true"
   [ -n "$(echo $INITPROC | grep /lib/systemd/systemd )" ] && SYSINIT="true"
 
+  . /etc/os-release
+  echo "Info: Running under $NAME $VERSION"
   if [ "$SYSINIT" = "true" ]; then
     echo "Info: Reloading daemons."
     systemctl $USEROPT daemon-reload
