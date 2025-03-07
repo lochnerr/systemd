@@ -11,10 +11,14 @@ LABEL MAINTAINER Richard Lochner, Clone Research Corp. <lochner@clone1.com> \
 # systemd-container - systemd for containers.
 
 # Useful packages for debugging:
+# procps - ps (Needed to determine if running under systemd)
+# vim - always
 
 RUN apt-get -y update \
  && DEBIAN_FRONTEND=noninteractive apt-get -y install \
         systemd-container \
+        procps \
+        vim \
         && \
     systemctl mask \
        systemd-logind.service \
