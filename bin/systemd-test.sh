@@ -39,7 +39,15 @@ fi
 errs=0
 wait_for_result INLINE
 wait_for_result SERVICE
-echo "Info: Tests completed with $errs error(s)."
+if [ "$errs" != "0" ]; then
+  echo
+  echo "Error: Tests completed with $errs error(s)."
+  echo
+  echo "Info: Did you forget to set the --podman-run-args='--systemd=always' option for podman-compose?"
+  echo
+else
+  echo "Info: Tests completed with no error(s)."
+fi
 
 if [ ! -d /unittest ]; then
   echo "Removing directory $DIR."
