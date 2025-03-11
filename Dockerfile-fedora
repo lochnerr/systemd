@@ -1,4 +1,5 @@
-FROM fedora:latest
+ARG RELEASE=latest
+FROM fedora:$RELEASE
 
 LABEL MAINTAINER Richard Lochner, Clone Research Corp. <lochner@clone1.com> \
       org.label-schema.name = "systemd" \
