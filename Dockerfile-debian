@@ -1,5 +1,6 @@
+ARG DISTRO=debian
 ARG RELEASE=latest
-FROM debian:$RELEASE
+FROM $DISTRO:$RELEASE
 
 LABEL MAINTAINER Richard Lochner, Clone Research Corp. <lochner@clone1.com> \
       org.label-schema.name = "systemd" \
