@@ -1,23 +1,25 @@
-version: '3'
-
-# Automated test compose file.
+# Automated test and build compose file for systemd.
 
 services:
   inline:
-    image: lochnerr/systemd
+    image: lochnerr/systemd:${DISTRO:-fedora}-${RELEASE:-latest}
     command: /usr/local/bin/run-service /usr/local/bin/test-script.sh INLINE /unittest
     volumes:
       - share:/unittest:z
     environment:
       NO_INIT: true
   service:
-    image: lochnerr/systemd
+    image: lochnerr/systemd:${DISTRO:-fedora}-${RELEASE:-latest}
     command: /usr/local/bin/run-service /usr/local/bin/test-script.sh SERVICE /unittest
     systemd: always
     volumes:
       - share:/unittest:z
   sut:
-    image: lochnerr/systemd
+    build:
+      dockerfile: Dockerfile-${DISTRO:-fedora}
+      args:
+        RELEASE: ${RELEASE:-latest}
+    image: lochnerr/systemd:${DISTRO:-fedora}-${RELEASE:-latest}
     command: /usr/local/bin/systemd-test.sh
     volumes:
       - share:/unittest:z
