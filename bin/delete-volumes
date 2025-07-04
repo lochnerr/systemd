@@ -1,0 +1,4 @@
+# shellcheck shell=sh
+# Delete test volumes before running tests.
+podman volume rm systemd_share 2>/dev/null || :
+

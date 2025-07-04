@@ -39,15 +39,16 @@ export BUILD_ARGS="--build-arg DISTRO=${DISTRO} --build-arg RELEASE=${RELEASE} -
 echo "Building the application."
 
 image=$(basename "$PWD")
+# shellcheck disable=SC2086
 if [ "${builder}" = "podman" ]; then
 	echo "Building with podman."
 	echo "podman build -t lochnerr/${image}:${DISTRO}-${RELEASE} $BUILD_ARGS -f Dockerfile-${DISTRO}"
-	podman build -t "lochnerr/${image}:${DISTRO}-${RELEASE}" "$BUILD_ARGS" -f Dockerfile-"${DISTRO}" || err="yes"
+	podman build -t "lochnerr/${image}:${DISTRO}-${RELEASE}" $BUILD_ARGS -f Dockerfile-"${DISTRO}" || err="yes"
 else
 	echo "Building with compose."
 	echo "Using compose file: ${compose_file}."
 	echo "podman-compose -f ${compose_file} build $BUILD_ARGS"
-	podman-compose -f docker-compose.test.yml build "$BUILD_ARGS" || err="yes"
+	podman-compose -f docker-compose.test.yml build $BUILD_ARGS || err="yes"
 fi
 if [ "$err" = "yes" ]; then
 	echo "ERROR: Build failed."
@@ -61,6 +62,16 @@ fi
 
 echo "Removing any unit test containers from a previous run."
 podman-compose -f docker-compose.test.yml down
+
+# Delete test volumes if needed before runnning tests.
+deletes=
+[ -e bin/delete-volumes ] && deletes="bin/delete-volumes"
+[ -e delete-volumes ]     && deletes="delete-volumes"
+if [ -n "${deletes}" ]; then
+	echo "Sourcing volume deletes from ${deletes}."
+	# shellcheck source=bin/delete-volumes
+	. "${deletes}"
+fi
 
 echo "Starting the unit test containers."
 podman-compose --podman-run-args='--systemd=always' -f docker-compose.test.yml up
