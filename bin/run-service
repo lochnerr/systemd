@@ -31,7 +31,8 @@ echo "Info: $0 Starting"
 
 SERVICE_NAME=$(basename "$0")
 
-if [ -n "$NO_INIT" ]; then
+echo "$NO_INIT" >/tmp/noini
+if grep -Ei '^yes$|^ye$|^y$|^true$|^tru$|^tr$|^t$' /tmp/noini >/dev/null 2>&1 ; then
 
   echo "Info: Executing command inline."
   "$@"
@@ -59,7 +60,7 @@ else
 
   # Store the environment vars (pruning unwanted ones) into an
   # EnvironmentFile for the service.
-  cat /proc/self/environ | xargs -0 -L1 >"${ENV_FILE}"
+  xargs -0 -L1 </proc/self/environ >"${ENV_FILE}"
   prune_vars DISTTAG container LS_COLORS TERM SHLVL
   
   echo "Info: Creating $SERVICE_DIR/${SERVICE_NAME}.service unit file."
